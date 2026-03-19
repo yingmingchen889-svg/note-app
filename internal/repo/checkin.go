@@ -119,31 +119,34 @@ func (r *CheckInRepo) CurrentStreak(ctx context.Context, planID, userID uuid.UUI
 	defer rows.Close()
 
 	streak := 0
-	var prevTime time.Time
 	todayTime, _ := time.Parse("2006-01-02", today)
+	var prevDate time.Time
 
 	for rows.Next() {
-		var date time.Time
-		if err := rows.Scan(&date); err != nil {
+		var rawDate time.Time
+		if err := rows.Scan(&rawDate); err != nil {
 			return 0, err
 		}
+		// Normalize to UTC date-only to avoid timezone issues
+		date := time.Date(rawDate.Year(), rawDate.Month(), rawDate.Day(), 0, 0, 0, 0, time.UTC)
 
 		if streak == 0 {
-			if date.Year() == todayTime.Year() && date.YearDay() == todayTime.YearDay() {
+			todayNorm := time.Date(todayTime.Year(), todayTime.Month(), todayTime.Day(), 0, 0, 0, 0, time.UTC)
+			if date.Equal(todayNorm) {
 				streak = 1
-				prevTime = date
+				prevDate = date
 				continue
 			}
 			break
 		}
 
-		// Check if this date is exactly 1 day before prevTime
-		diff := prevTime.Sub(date).Hours() / 24
-		if diff != 1 {
+		// Check if this date is exactly 1 day before prevDate
+		expected := prevDate.AddDate(0, 0, -1)
+		if !date.Equal(expected) {
 			break
 		}
 		streak++
-		prevTime = date
+		prevDate = date
 	}
 	return streak, nil
 }
