@@ -12,6 +12,7 @@ type Handlers struct {
 	CheckIn   *CheckInHandler
 	Upload    *UploadHandler
 	Social    *SocialHandler
+	Explore   *ExploreHandler
 	JWTSecret string
 }
 
@@ -73,6 +74,15 @@ func SetupRouter(h *Handlers) *gin.Engine {
 					social.DELETE("/comments/:id", h.Social.DeleteComment)
 					social.GET("/comments/:id/replies", h.Social.GetReplies)
 				}
+			}
+		}
+
+		// Public explore (optional auth for is_liked)
+		if h.Explore != nil {
+			explore := v1.Group("/explore", middleware.OptionalAuth(h.JWTSecret))
+			{
+				explore.GET("/notes", h.Explore.ListNotes)
+				explore.GET("/plans", h.Explore.ListPlans)
 			}
 		}
 	}
