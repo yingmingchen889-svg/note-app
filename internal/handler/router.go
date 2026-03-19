@@ -11,6 +11,7 @@ type Handlers struct {
 	Plan      *PlanHandler
 	CheckIn   *CheckInHandler
 	Upload    *UploadHandler
+	Social    *SocialHandler
 	JWTSecret string
 }
 
@@ -60,6 +61,18 @@ func SetupRouter(h *Handlers) *gin.Engine {
 			{
 				upload.POST("/presign", h.Upload.Presign)
 				upload.POST("/confirm", h.Upload.Confirm)
+			}
+
+			if h.Social != nil {
+				social := protected.Group("/social")
+				{
+					social.POST("/:target_type/:id/like", h.Social.Like)
+					social.DELETE("/:target_type/:id/like", h.Social.Unlike)
+					social.GET("/:target_type/:id/comments", h.Social.GetComments)
+					social.POST("/:target_type/:id/comments", h.Social.CreateComment)
+					social.DELETE("/comments/:id", h.Social.DeleteComment)
+					social.GET("/comments/:id/replies", h.Social.GetReplies)
+				}
 			}
 		}
 	}
