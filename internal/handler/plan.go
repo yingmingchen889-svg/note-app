@@ -12,10 +12,11 @@ import (
 type PlanHandler struct {
 	planService        *service.PlanService
 	leaderboardService *service.LeaderboardService
+	socialService      *service.SocialService
 }
 
-func NewPlanHandler(planService *service.PlanService, leaderboardService *service.LeaderboardService) *PlanHandler {
-	return &PlanHandler{planService: planService, leaderboardService: leaderboardService}
+func NewPlanHandler(planService *service.PlanService, leaderboardService *service.LeaderboardService, socialService *service.SocialService) *PlanHandler {
+	return &PlanHandler{planService: planService, leaderboardService: leaderboardService, socialService: socialService}
 }
 
 func (h *PlanHandler) Create(c *gin.Context) {
@@ -41,6 +42,19 @@ func (h *PlanHandler) Get(c *gin.Context) {
 	plan, err := h.planService.GetByID(c.Request.Context(), getUserID(c), planID)
 	if err != nil {
 		handleServiceError(c, err)
+		return
+	}
+
+	// For public plans, include social counts
+	if plan.Visibility == "public" && h.socialService != nil {
+		likeCount, commentCount, isLiked, _ := h.socialService.GetSocialCounts(
+			c.Request.Context(), getUserID(c), "plan", planID)
+		RespondOK(c, gin.H{
+			"plan":          plan,
+			"like_count":    likeCount,
+			"comment_count": commentCount,
+			"is_liked":      isLiked,
+		})
 		return
 	}
 	RespondOK(c, plan)

@@ -11,11 +11,12 @@ import (
 )
 
 type NoteHandler struct {
-	noteService *service.NoteService
+	noteService   *service.NoteService
+	socialService *service.SocialService
 }
 
-func NewNoteHandler(noteService *service.NoteService) *NoteHandler {
-	return &NoteHandler{noteService: noteService}
+func NewNoteHandler(noteService *service.NoteService, socialService *service.SocialService) *NoteHandler {
+	return &NoteHandler{noteService: noteService, socialService: socialService}
 }
 
 func getUserID(c *gin.Context) uuid.UUID {
@@ -47,6 +48,19 @@ func (h *NoteHandler) Get(c *gin.Context) {
 	note, err := h.noteService.GetByID(c.Request.Context(), getUserID(c), noteID)
 	if err != nil {
 		handleServiceError(c, err)
+		return
+	}
+
+	// For public notes, include social counts
+	if note.Visibility == "public" && h.socialService != nil {
+		likeCount, commentCount, isLiked, _ := h.socialService.GetSocialCounts(
+			c.Request.Context(), getUserID(c), "note", noteID)
+		RespondOK(c, gin.H{
+			"note":          note,
+			"like_count":    likeCount,
+			"comment_count": commentCount,
+			"is_liked":      isLiked,
+		})
 		return
 	}
 	RespondOK(c, note)

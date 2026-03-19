@@ -58,8 +58,8 @@ func main() {
 	// Handlers + Router
 	handlers := &handler.Handlers{
 		Auth:      handler.NewAuthHandler(authService),
-		Note:      handler.NewNoteHandler(noteService),
-		Plan:      handler.NewPlanHandler(planService, leaderboardService),
+		Note:      handler.NewNoteHandler(noteService, socialService),
+		Plan:      handler.NewPlanHandler(planService, leaderboardService, socialService),
 		CheckIn:   handler.NewCheckInHandler(checkInService),
 		Upload:    handler.NewUploadHandler(minioClient),
 		Social:    handler.NewSocialHandler(socialService),
