@@ -22,13 +22,16 @@ func main() {
 
 	userRepo := repo.NewUserRepo(pool)
 	noteRepo := repo.NewNoteRepo(pool)
+	planRepo := repo.NewPlanRepo(pool)
 
 	authService := service.NewAuthService(userRepo, cfg.JWTSecret, cfg.JWTExpireHours)
 	noteService := service.NewNoteService(noteRepo)
+	planService := service.NewPlanService(planRepo)
 
 	handlers := &handler.Handlers{
 		Auth:      handler.NewAuthHandler(authService),
 		Note:      handler.NewNoteHandler(noteService),
+		Plan:      handler.NewPlanHandler(planService),
 		JWTSecret: cfg.JWTSecret,
 	}
 	r := handler.SetupRouter(handlers)

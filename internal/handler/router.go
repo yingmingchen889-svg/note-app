@@ -8,6 +8,7 @@ import (
 type Handlers struct {
 	Auth      *AuthHandler
 	Note      *NoteHandler
+	Plan      *PlanHandler
 	JWTSecret string
 }
 
@@ -33,6 +34,17 @@ func SetupRouter(h *Handlers) *gin.Engine {
 				notes.PUT("/:id", h.Note.Update)
 				notes.DELETE("/:id", h.Note.Delete)
 				notes.PUT("/:id/share", h.Note.Share)
+			}
+
+			plans := protected.Group("/plans")
+			{
+				plans.GET("", h.Plan.List)
+				plans.POST("", h.Plan.Create)
+				plans.GET("/:id", h.Plan.Get)
+				plans.PUT("/:id", h.Plan.Update)
+				plans.PUT("/:id/share", h.Plan.Share)
+				plans.POST("/:id/join", h.Plan.Join)
+				plans.GET("/:id/members", h.Plan.Members)
 			}
 		}
 	}
