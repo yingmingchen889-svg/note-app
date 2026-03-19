@@ -20,6 +20,8 @@ func testPool(t *testing.T) *pgxpool.Pool {
 	}
 	t.Cleanup(func() { pool.Close() })
 
+	_, _ = pool.Exec(context.Background(), "DELETE FROM likes")
+	_, _ = pool.Exec(context.Background(), "DELETE FROM comments")
 	_, _ = pool.Exec(context.Background(), "DELETE FROM check_ins")
 	_, _ = pool.Exec(context.Background(), "DELETE FROM plan_members")
 	_, _ = pool.Exec(context.Background(), "DELETE FROM plans")
