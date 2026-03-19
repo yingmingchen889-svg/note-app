@@ -9,6 +9,7 @@ type Handlers struct {
 	Auth      *AuthHandler
 	Note      *NoteHandler
 	Plan      *PlanHandler
+	CheckIn   *CheckInHandler
 	JWTSecret string
 }
 
@@ -45,7 +46,14 @@ func SetupRouter(h *Handlers) *gin.Engine {
 				plans.PUT("/:id/share", h.Plan.Share)
 				plans.POST("/:id/join", h.Plan.Join)
 				plans.GET("/:id/members", h.Plan.Members)
+
+				// Check-in routes (nested under plans)
+				plans.POST("/:id/checkins", h.CheckIn.CheckIn)
+				plans.GET("/:id/checkins", h.CheckIn.ListByPlan)
 			}
+
+			// Calendar (top-level under protected)
+			protected.GET("/checkins/calendar", h.CheckIn.Calendar)
 		}
 	}
 
