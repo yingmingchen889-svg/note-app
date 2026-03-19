@@ -7,6 +7,7 @@ import (
 
 type Handlers struct {
 	Auth      *AuthHandler
+	Note      *NoteHandler
 	JWTSecret string
 }
 
@@ -21,9 +22,20 @@ func SetupRouter(h *Handlers) *gin.Engine {
 			auth.POST("/register", h.Auth.Register)
 			auth.POST("/login", h.Auth.Login)
 		}
-	}
 
-	_ = v1.Group("/").Use(middleware.Auth(h.JWTSecret))
+		protected := v1.Group("", middleware.Auth(h.JWTSecret))
+		{
+			notes := protected.Group("/notes")
+			{
+				notes.GET("", h.Note.List)
+				notes.POST("", h.Note.Create)
+				notes.GET("/:id", h.Note.Get)
+				notes.PUT("/:id", h.Note.Update)
+				notes.DELETE("/:id", h.Note.Delete)
+				notes.PUT("/:id/share", h.Note.Share)
+			}
+		}
+	}
 
 	return r
 }

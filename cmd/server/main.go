@@ -21,10 +21,14 @@ func main() {
 	defer pool.Close()
 
 	userRepo := repo.NewUserRepo(pool)
+	noteRepo := repo.NewNoteRepo(pool)
+
 	authService := service.NewAuthService(userRepo, cfg.JWTSecret, cfg.JWTExpireHours)
+	noteService := service.NewNoteService(noteRepo)
 
 	handlers := &handler.Handlers{
 		Auth:      handler.NewAuthHandler(authService),
+		Note:      handler.NewNoteHandler(noteService),
 		JWTSecret: cfg.JWTSecret,
 	}
 	r := handler.SetupRouter(handlers)
