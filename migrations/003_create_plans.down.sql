@@ -1,0 +1,3 @@
+DROP TABLE IF EXISTS plan_members;
+DROP TABLE IF EXISTS plans;
+DROP TYPE IF EXISTS plan_role;
