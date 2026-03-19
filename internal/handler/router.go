@@ -10,6 +10,7 @@ type Handlers struct {
 	Note      *NoteHandler
 	Plan      *PlanHandler
 	CheckIn   *CheckInHandler
+	Upload    *UploadHandler
 	JWTSecret string
 }
 
@@ -54,6 +55,12 @@ func SetupRouter(h *Handlers) *gin.Engine {
 
 			// Calendar (top-level under protected)
 			protected.GET("/checkins/calendar", h.CheckIn.Calendar)
+
+			upload := protected.Group("/upload")
+			{
+				upload.POST("/presign", h.Upload.Presign)
+				upload.POST("/confirm", h.Upload.Confirm)
+			}
 		}
 	}
 

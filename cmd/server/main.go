@@ -8,11 +8,17 @@ import (
 	"github.com/user/note-app/internal/handler"
 	"github.com/user/note-app/internal/repo"
 	"github.com/user/note-app/internal/service"
+	"github.com/user/note-app/internal/storage"
 )
 
 func main() {
 	cfg := config.Load()
 	ctx := context.Background()
+
+	minioClient, err := storage.NewMinIOClient(cfg.MinIO)
+	if err != nil {
+		log.Fatalf("Failed to connect to MinIO: %v", err)
+	}
 
 	pool, err := repo.NewPool(ctx, cfg.DB.DSN())
 	if err != nil {
@@ -35,6 +41,7 @@ func main() {
 		Note:      handler.NewNoteHandler(noteService),
 		Plan:      handler.NewPlanHandler(planService),
 		CheckIn:   handler.NewCheckInHandler(checkInService),
+		Upload:    handler.NewUploadHandler(minioClient),
 		JWTSecret: cfg.JWTSecret,
 	}
 	r := handler.SetupRouter(handlers)
