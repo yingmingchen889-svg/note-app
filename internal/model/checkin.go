@@ -27,3 +27,10 @@ type CalendarEntry struct {
 	PlanID    uuid.UUID `json:"plan_id"`
 	PlanTitle string    `json:"plan_title"`
 }
+
+type LeaderboardEntry struct {
+	Rank         int       `json:"rank"`
+	User         UserBrief `json:"user"`
+	CheckInCount int       `json:"check_in_count"`
+	Streak       int       `json:"streak"`
+}

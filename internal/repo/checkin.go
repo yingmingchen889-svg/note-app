@@ -32,22 +32,32 @@ func scanCheckIn(scan func(dest ...any) error) (*model.CheckIn, error) {
 	return &ci, nil
 }
 
-func (r *CheckInRepo) Upsert(ctx context.Context, planID, userID uuid.UUID, date string, params model.UpsertCheckInParams) (*model.CheckIn, error) {
+func (r *CheckInRepo) Upsert(ctx context.Context, planID, userID uuid.UUID, date string, params model.UpsertCheckInParams) (*model.CheckIn, bool, error) {
 	media := params.Media
 	if media == nil {
 		media = json.RawMessage(`[]`)
 	}
 
+	var isNew bool
 	row := r.pool.QueryRow(ctx,
-		`INSERT INTO check_ins (plan_id, user_id, content, media, checked_date)
-		 VALUES ($1, $2, $3, $4, $5)
-		 ON CONFLICT (plan_id, user_id, checked_date)
-		 DO UPDATE SET content = EXCLUDED.content, media = EXCLUDED.media, checked_at = NOW()
-		 RETURNING id, plan_id, user_id, content, media, checked_date, checked_at`,
+		`WITH upsert AS (
+			INSERT INTO check_ins (plan_id, user_id, content, media, checked_date)
+			VALUES ($1, $2, $3, $4, $5)
+			ON CONFLICT (plan_id, user_id, checked_date)
+			DO UPDATE SET content = EXCLUDED.content, media = EXCLUDED.media, checked_at = NOW()
+			RETURNING *, (xmax = 0) AS is_new
+		) SELECT id, plan_id, user_id, content, media, checked_date, checked_at, is_new FROM upsert`,
 		planID, userID, params.Content, media, date,
 	)
-	ci, err := scanCheckIn(row.Scan)
-	return ci, err
+
+	var ci model.CheckIn
+	var checkedDate time.Time
+	err := row.Scan(&ci.ID, &ci.PlanID, &ci.UserID, &ci.Content, &ci.Media, &checkedDate, &ci.CheckedAt, &isNew)
+	if err != nil {
+		return nil, false, err
+	}
+	ci.CheckedDate = checkedDate.Format("2006-01-02")
+	return &ci, isNew, nil
 }
 
 func (r *CheckInRepo) ListByPlan(ctx context.Context, planID uuid.UUID, params model.PaginationParams) ([]model.CheckIn, int, error) {

@@ -10,12 +10,13 @@ import (
 )
 
 type CheckInService struct {
-	checkInRepo *repo.CheckInRepo
-	planRepo    *repo.PlanRepo
+	checkInRepo        *repo.CheckInRepo
+	planRepo           *repo.PlanRepo
+	leaderboardService *LeaderboardService
 }
 
-func NewCheckInService(checkInRepo *repo.CheckInRepo, planRepo *repo.PlanRepo) *CheckInService {
-	return &CheckInService{checkInRepo: checkInRepo, planRepo: planRepo}
+func NewCheckInService(checkInRepo *repo.CheckInRepo, planRepo *repo.PlanRepo, leaderboardService *LeaderboardService) *CheckInService {
+	return &CheckInService{checkInRepo: checkInRepo, planRepo: planRepo, leaderboardService: leaderboardService}
 }
 
 func (s *CheckInService) CheckIn(ctx context.Context, userID uuid.UUID, planID uuid.UUID, params model.UpsertCheckInParams) (*model.CheckIn, error) {
@@ -29,7 +30,17 @@ func (s *CheckInService) CheckIn(ctx context.Context, userID uuid.UUID, planID u
 	}
 
 	today := time.Now().Format("2006-01-02")
-	return s.checkInRepo.Upsert(ctx, planID, userID, today, params)
+	ci, isNew, err := s.checkInRepo.Upsert(ctx, planID, userID, today, params)
+	if err != nil {
+		return nil, err
+	}
+
+	// Update leaderboard on new check-in
+	if isNew && s.leaderboardService != nil {
+		_ = s.leaderboardService.IncrementScore(ctx, planID, userID)
+	}
+
+	return ci, nil
 }
 
 func (s *CheckInService) ListByPlan(ctx context.Context, planID uuid.UUID, params model.PaginationParams) ([]model.CheckIn, int, error) {

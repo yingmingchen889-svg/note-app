@@ -53,6 +53,7 @@ func SetupRouter(h *Handlers) *gin.Engine {
 				// Check-in routes (nested under plans)
 				plans.POST("/:id/checkins", h.CheckIn.CheckIn)
 				plans.GET("/:id/checkins", h.CheckIn.ListByPlan)
+			plans.GET("/:id/leaderboard", h.Plan.Leaderboard)
 			}
 
 			// Calendar (top-level under protected)

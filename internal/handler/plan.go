@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"strconv"
+
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/user/note-app/internal/model"
@@ -8,11 +10,12 @@ import (
 )
 
 type PlanHandler struct {
-	planService *service.PlanService
+	planService        *service.PlanService
+	leaderboardService *service.LeaderboardService
 }
 
-func NewPlanHandler(planService *service.PlanService) *PlanHandler {
-	return &PlanHandler{planService: planService}
+func NewPlanHandler(planService *service.PlanService, leaderboardService *service.LeaderboardService) *PlanHandler {
+	return &PlanHandler{planService: planService, leaderboardService: leaderboardService}
 }
 
 func (h *PlanHandler) Create(c *gin.Context) {
@@ -116,4 +119,25 @@ func (h *PlanHandler) Members(c *gin.Context) {
 		return
 	}
 	RespondOK(c, members)
+}
+
+func (h *PlanHandler) Leaderboard(c *gin.Context) {
+	planID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		RespondBadRequest(c, "invalid plan id")
+		return
+	}
+
+	limitStr := c.DefaultQuery("limit", "50")
+	limit := 50
+	if v, err := strconv.Atoi(limitStr); err == nil && v > 0 && v <= 100 {
+		limit = v
+	}
+
+	entries, err := h.leaderboardService.GetLeaderboard(c.Request.Context(), planID, limit)
+	if err != nil {
+		RespondInternalError(c)
+		return
+	}
+	RespondOK(c, gin.H{"data": entries})
 }

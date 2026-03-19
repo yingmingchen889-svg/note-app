@@ -34,12 +34,12 @@ func main() {
 	authService := service.NewAuthService(userRepo, cfg.JWTSecret, cfg.JWTExpireHours)
 	noteService := service.NewNoteService(noteRepo)
 	planService := service.NewPlanService(planRepo)
-	checkInService := service.NewCheckInService(checkInRepo, planRepo)
+	checkInService := service.NewCheckInService(checkInRepo, planRepo, nil)
 
 	handlers := &handler.Handlers{
 		Auth:      handler.NewAuthHandler(authService),
 		Note:      handler.NewNoteHandler(noteService),
-		Plan:      handler.NewPlanHandler(planService),
+		Plan:      handler.NewPlanHandler(planService, nil),
 		CheckIn:   handler.NewCheckInHandler(checkInService),
 		Upload:    handler.NewUploadHandler(minioClient),
 		JWTSecret: cfg.JWTSecret,
