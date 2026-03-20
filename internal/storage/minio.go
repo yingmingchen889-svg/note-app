@@ -38,6 +38,18 @@ func NewMinIOClient(cfg config.MinIOConfig) (*MinIOClient, error) {
 		}
 	}
 
+	// Set bucket policy to public read so uploaded files are accessible
+	policy := fmt.Sprintf(`{
+		"Version": "2012-10-17",
+		"Statement": [{
+			"Effect": "Allow",
+			"Principal": {"AWS": ["*"]},
+			"Action": ["s3:GetObject"],
+			"Resource": ["arn:aws:s3:::%s/*"]
+		}]
+	}`, cfg.Bucket)
+	_ = client.SetBucketPolicy(ctx, cfg.Bucket, policy)
+
 	return &MinIOClient{client: client, bucket: cfg.Bucket}, nil
 }
 
