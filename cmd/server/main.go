@@ -46,6 +46,7 @@ func main() {
 	likeRepo := repo.NewLikeRepo(pool)
 	commentRepo := repo.NewCommentRepo(pool)
 	exploreRepo := repo.NewExploreRepo(pool)
+	growthRepo := repo.NewGrowthRepo(pool)
 
 	// Services
 	authService := service.NewAuthService(userRepo, cfg.JWTSecret, cfg.JWTExpireHours)
@@ -54,6 +55,7 @@ func main() {
 	leaderboardService := service.NewLeaderboardService(rdb, checkInRepo, userRepo)
 	checkInService := service.NewCheckInService(checkInRepo, planRepo, leaderboardService)
 	socialService := service.NewSocialService(likeRepo, commentRepo, noteRepo, planRepo, checkInRepo)
+	growthService := service.NewGrowthService(pool, growthRepo)
 
 	// Handlers + Router
 	handlers := &handler.Handlers{
@@ -64,6 +66,7 @@ func main() {
 		Upload:    handler.NewUploadHandler(minioClient),
 		Social:    handler.NewSocialHandler(socialService),
 		Explore:   handler.NewExploreHandler(exploreRepo),
+		Growth:    handler.NewGrowthHandler(growthService),
 		JWTSecret: cfg.JWTSecret,
 	}
 	r := handler.SetupRouter(handlers)

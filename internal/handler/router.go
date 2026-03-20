@@ -13,6 +13,7 @@ type Handlers struct {
 	Upload    *UploadHandler
 	Social    *SocialHandler
 	Explore   *ExploreHandler
+	Growth    *GrowthHandler
 	JWTSecret string
 }
 
@@ -65,7 +66,15 @@ func SetupRouter(h *Handlers) *gin.Engine {
 				upload.POST("/confirm", h.Upload.Confirm)
 			}
 
-			if h.Social != nil {
+			if h.Growth != nil {
+			growth := protected.Group("/growth")
+			{
+				growth.GET("/reports", h.Growth.List)
+				growth.POST("/generate", h.Growth.Generate)
+			}
+		}
+
+		if h.Social != nil {
 				social := protected.Group("/social")
 				{
 					social.POST("/:target_type/:id/like", h.Social.Like)
