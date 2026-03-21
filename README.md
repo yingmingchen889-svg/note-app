@@ -105,29 +105,59 @@ note-app/
 
 ## Getting Started
 
-### Prerequisites
-- Go 1.22+
-- Docker & Docker Compose
-- [golang-migrate](https://github.com/golang-migrate/migrate) CLI
+### Option 1: Docker Compose (Recommended)
 
-### Setup
+One command to start everything — database auto-initialized, no manual setup needed.
 
 ```bash
-# Start infrastructure
+# Clone the repository
+git clone https://github.com/yingmingchen889-svg/note-app.git
+cd note-app
+
+# Build and start all services
+docker compose up -d --build
+
+# Verify all services are running
+docker compose ps
+```
+
+That's it! The server is running at `http://localhost:8080`.
+
+- PostgreSQL table structure is auto-initialized via `scripts/init_db.sql`
+- MinIO bucket is auto-created with public read policy
+- App waits for all dependencies to be healthy before starting
+
+```bash
+# View logs
+docker compose logs -f app
+
+# Stop all services
+docker compose down
+
+# Stop and remove data (clean start)
+docker compose down -v
+```
+
+### Option 2: Local Development
+
+For development with hot-reload:
+
+```bash
+# Prerequisites: Go 1.22+, Docker, golang-migrate CLI
+
+# Start infrastructure only
 docker compose up -d postgres minio redis
 
 # Run database migrations
 migrate -path migrations -database "postgres://noteapp:noteapp@localhost:5432/noteapp?sslmode=disable" up
 
-# Start the server
+# Start the server (with hot-reload)
 go run cmd/server/main.go
 ```
 
-The server starts on `http://localhost:8080`.
-
 ### Environment Variables
 
-Copy `.env.example` to `.env` and adjust as needed:
+Docker Compose mode uses built-in environment variables. For local development, copy `.env.example` to `.env`:
 
 ```env
 SERVER_PORT=8080
@@ -136,12 +166,32 @@ DB_PORT=5432
 DB_USER=noteapp
 DB_PASSWORD=noteapp
 DB_NAME=noteapp
+DB_SSLMODE=disable
 MINIO_ENDPOINT=localhost:9000
 MINIO_ACCESS_KEY=minioadmin
 MINIO_SECRET_KEY=minioadmin
+MINIO_BUCKET=noteapp
+MINIO_USE_SSL=false
 REDIS_ADDR=localhost:6379
+REDIS_PASSWORD=
+REDIS_DB=0
 JWT_SECRET=change-me-in-production
+JWT_EXPIRE_HOURS=72
 ```
+
+### Service Ports
+
+| Service | Port | Description |
+|---------|------|-------------|
+| App | 8080 | API server |
+| PostgreSQL | 5432 | Database |
+| MinIO API | 9000 | File storage |
+| MinIO Console | 9001 | MinIO web UI |
+| Redis | 6379 | Cache |
+
+## Related
+
+- [note-app-flutter](https://github.com/yingmingchen889-svg/note-app-flutter) — Flutter frontend
 
 ## License
 
