@@ -136,6 +136,8 @@ func handleServiceError(c *gin.Context, err error) {
 	switch {
 	case errors.Is(err, repo.ErrNotFound):
 		RespondNotFound(c)
+	case errors.Is(err, service.ErrHasParticipants):
+		RespondError(c, 403, "HAS_PARTICIPANTS", err.Error())
 	case errors.Is(err, service.ErrForbidden):
 		RespondForbidden(c)
 	default:

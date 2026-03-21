@@ -47,6 +47,7 @@ func SetupRouter(h *Handlers) *gin.Engine {
 				plans.POST("", h.Plan.Create)
 				plans.GET("/:id", h.Plan.Get)
 				plans.PUT("/:id", h.Plan.Update)
+				plans.DELETE("/:id", h.Plan.Delete)
 				plans.PUT("/:id/share", h.Plan.Share)
 				plans.POST("/:id/join", h.Plan.Join)
 				plans.GET("/:id/members", h.Plan.Members)

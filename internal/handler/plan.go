@@ -94,6 +94,20 @@ func (h *PlanHandler) Update(c *gin.Context) {
 	RespondOK(c, plan)
 }
 
+func (h *PlanHandler) Delete(c *gin.Context) {
+	planID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		RespondBadRequest(c, "invalid plan id")
+		return
+	}
+
+	if err := h.planService.Delete(c.Request.Context(), getUserID(c), planID); err != nil {
+		handleServiceError(c, err)
+		return
+	}
+	RespondOK(c, gin.H{"message": "deleted"})
+}
+
 func (h *PlanHandler) Share(c *gin.Context) {
 	planID, err := uuid.Parse(c.Param("id"))
 	if err != nil {

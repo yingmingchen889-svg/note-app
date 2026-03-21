@@ -43,6 +43,20 @@ func (s *PlanService) Update(ctx context.Context, userID uuid.UUID, planID uuid.
 	if plan.UserID != userID {
 		return nil, ErrForbidden
 	}
+
+	// If plan is public and has other members, only allow description changes
+	if plan.Visibility == "public" {
+		memberCount, err := s.planRepo.MemberCount(ctx, planID)
+		if err != nil {
+			return nil, err
+		}
+		if memberCount > 1 {
+			if params.Title != nil || params.StartDate != nil || params.EndDate != nil {
+				return nil, ErrForbidden
+			}
+		}
+	}
+
 	return s.planRepo.Update(ctx, planID, params)
 }
 
@@ -70,6 +84,29 @@ func (s *PlanService) Join(ctx context.Context, userID uuid.UUID, planID uuid.UU
 		return ErrForbidden
 	}
 	return s.planRepo.AddMember(ctx, planID, userID)
+}
+
+func (s *PlanService) Delete(ctx context.Context, userID uuid.UUID, planID uuid.UUID) error {
+	plan, err := s.planRepo.GetByID(ctx, planID)
+	if err != nil {
+		return err
+	}
+	if plan.UserID != userID {
+		return ErrForbidden
+	}
+
+	// If plan is public and has other members, prevent deletion
+	if plan.Visibility == "public" {
+		memberCount, err := s.planRepo.MemberCount(ctx, planID)
+		if err != nil {
+			return err
+		}
+		if memberCount > 1 {
+			return ErrHasParticipants
+		}
+	}
+
+	return s.planRepo.Delete(ctx, planID)
 }
 
 func (s *PlanService) ListMembers(ctx context.Context, planID uuid.UUID) ([]model.PlanMember, error) {

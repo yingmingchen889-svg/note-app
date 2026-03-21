@@ -11,6 +11,7 @@ import (
 
 var ErrInvalidCredentials = errors.New("invalid credentials")
 var ErrForbidden = errors.New("forbidden")
+var ErrHasParticipants = errors.New("cannot delete plan with other participants")
 
 type AuthService struct {
 	userRepo       *repo.UserRepo

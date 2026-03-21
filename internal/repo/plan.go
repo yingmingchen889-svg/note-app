@@ -222,3 +222,43 @@ func (r *PlanRepo) IsMember(ctx context.Context, planID, userID uuid.UUID) (bool
 	).Scan(&exists)
 	return exists, err
 }
+
+func (r *PlanRepo) MemberCount(ctx context.Context, planID uuid.UUID) (int, error) {
+	var count int
+	err := r.pool.QueryRow(ctx,
+		`SELECT COUNT(*) FROM plan_members WHERE plan_id = $1`,
+		planID,
+	).Scan(&count)
+	return count, err
+}
+
+func (r *PlanRepo) Delete(ctx context.Context, planID uuid.UUID) error {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	// Delete plan members first
+	_, err = tx.Exec(ctx, `DELETE FROM plan_members WHERE plan_id = $1`, planID)
+	if err != nil {
+		return err
+	}
+
+	// Delete check-ins
+	_, err = tx.Exec(ctx, `DELETE FROM check_ins WHERE plan_id = $1`, planID)
+	if err != nil {
+		return err
+	}
+
+	// Delete the plan
+	result, err := tx.Exec(ctx, `DELETE FROM plans WHERE id = $1`, planID)
+	if err != nil {
+		return err
+	}
+	if result.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+
+	return tx.Commit(ctx)
+}
